@@ -66,8 +66,9 @@ public:
             return;
         }
         
+        double single_word_percentage = 1.0 / words.size();
         for (const string& word : words) {       
-            word_to_document_freqs_[word][document_id] += 1.0 / words.size();
+            word_to_document_freqs_[word][document_id] += single_word_percentage;
         }
         
         ++document_count_; 
@@ -123,6 +124,10 @@ private:
         }
         return query;
     }
+    
+    double CountIDF(const string& word) const {
+        return log(static_cast<double>(document_count_) / word_to_document_freqs_.at(word).size());
+    }
 
     vector<Document> FindAllDocuments(const Query& query) const {
         vector<Document> matched_documents; 
@@ -133,7 +138,7 @@ private:
                 continue;
             }
             
-            double idf = log(static_cast<double>(document_count_) / word_to_document_freqs_.at(word).size());
+            double idf = CountIDF(word);
             for (const auto& [id, tf] : word_to_document_freqs_.at(word)) {
                 docs[id] += idf * tf;
             }
@@ -167,3 +172,4 @@ int main() {
              << "relevance = "s << relevance << " }"s << endl;
     }
 }
+
