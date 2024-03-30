@@ -81,8 +81,6 @@ enum class DocumentStatus {
 
 class SearchServer {
 public:
-    inline static constexpr int INVALID_DOCUMENT_ID = -1;
-
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words)
         : stop_words_(MakeUniqueNonEmptyStrings(stop_words)) {
@@ -241,18 +239,12 @@ private:
     };
 
     QueryWord ParseQueryWord(string text) const {
-        // проверка на спецсимволы и пустую строку
         if (!IsValidWord(text) || text.empty()) {
             throw invalid_argument("Invalid argument"s);
         }
         
-        // проверка чтобы слово не состояло только из минусов
-        if (count(text.begin(), text.end(), '-') == text.size()) {
-            throw invalid_argument("Invalid argument"s);
-        }
-        
-        // проверка чтобы слово не содержало больше одного минуса
-        if (count(text.begin(), text.end(), '-') > 1) {
+        int amount_of_minus = count(text.begin(), text.end(), '-');
+        if (amount_of_minus == text.size() || amount_of_minus > 1) {
             throw invalid_argument("Invalid argument"s);
         }
           
@@ -261,6 +253,7 @@ private:
             is_minus = true;
             text = text.substr(1);
         }
+
         return {text, is_minus, IsStopWord(text)};
     }
 
