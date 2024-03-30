@@ -12,6 +12,7 @@
 using namespace std;
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
+const double MAX_RELEVANCE_DIFF = 1e-6;
 
 string ReadLine() {
     string s;
@@ -94,9 +95,6 @@ public:
         : SearchServer(
             SplitIntoWords(stop_words_text))  // Invoke delegating constructor from string container
     {
-            if (!IsValidWords(stop_words_)) {
-                throw invalid_argument("Invalid argument"s);
-            }
     }
 
     void AddDocument(
@@ -124,19 +122,14 @@ public:
     template <typename DocumentPredicate>
     vector<Document> FindTopDocuments(const string& raw_query, DocumentPredicate document_predicate) const {
         const Query query = ParseQuery(raw_query);
-        
-        if (!IsValidWords(query.minus_words) || !IsValidWords(query.plus_words)) {
-            throw invalid_argument("Invalid argument"s);
-        }
-
         auto matched_documents = FindAllDocuments(query, document_predicate);
         sort(matched_documents.begin(), matched_documents.end(),
              [](const Document& lhs, const Document& rhs) {
-                 if (abs(lhs.relevance - rhs.relevance) < 1e-6) {
+                 if (abs(lhs.relevance - rhs.relevance) < MAX_RELEVANCE_DIFF) {
                      return lhs.rating > rhs.rating;
-                 } else {
-                     return lhs.relevance > rhs.relevance;
                  }
+                 
+                 return lhs.relevance > rhs.relevance;
              });
         if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
             matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
@@ -160,21 +153,12 @@ public:
     }
     
     int GetDocumentId(int index) const {
-        if (index < 0 || index > document_ids.size()) {
-            throw out_of_range("Document index is out of range"s);
-        }
-        
-        return document_ids[index];
+        return document_ids.at(index);
     }
 
     tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query, int document_id) const {
         const Query query = ParseQuery(raw_query);
         vector<string> matched_words;
-        
-        if (!IsValidWords(query.minus_words) || !IsValidWords(query.plus_words)) {
-            throw invalid_argument("Invalid argument"s);
-        }
-        
         for (const string& word : query.plus_words) {
             if (word_to_document_freqs_.count(word) == 0) {
                 continue;
@@ -257,8 +241,22 @@ private:
     };
 
     QueryWord ParseQueryWord(string text) const {
+        // проверка на спецсимволы и пустую строку
+        if (!IsValidWord(text) || text.empty()) {
+            throw invalid_argument("Invalid argument"s);
+        }
+        
+        // проверка чтобы слово не состояло только из минусов
+        if (count(text.begin(), text.end(), '-') == text.size()) {
+            throw invalid_argument("Invalid argument"s);
+        }
+        
+        // проверка чтобы слово не содержало больше одного минуса
+        if (count(text.begin(), text.end(), '-') > 1) {
+            throw invalid_argument("Invalid argument"s);
+        }
+          
         bool is_minus = false;
-        // Word shouldn't be empty
         if (text[0] == '-') {
             is_minus = true;
             text = text.substr(1);
