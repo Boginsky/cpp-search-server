@@ -85,7 +85,7 @@ public:
     explicit SearchServer(const StringContainer& stop_words)
         : stop_words_(MakeUniqueNonEmptyStrings(stop_words)) {
             if (!IsValidWords(stop_words_)) {
-                throw invalid_argument("Invalid argument"s);
+                throw invalid_argument("Can't create SearchServer because stop words contains invailid strings"s);
             }
     }
 
@@ -101,12 +101,12 @@ public:
         const vector<int>& ratings
     ) {
         if (document_id < 0 || documents_.count(document_id)) {
-            throw invalid_argument("Invalid argument"s);
+            throw invalid_argument("Can't add doument with document_id because id is invalid"s);
         }
   
         const vector<string> words = SplitIntoWordsNoStop(document);
         if (!IsValidWords(words)) {
-            throw invalid_argument("Invalid argument"s);
+            throw invalid_argument("Can't add document because is contains invalid strings"s);
         }
         
         const double inv_word_count = 1.0 / words.size();
@@ -240,12 +240,16 @@ private:
 
     QueryWord ParseQueryWord(string text) const {
         if (!IsValidWord(text) || text.empty()) {
-            throw invalid_argument("Invalid argument"s);
+            throw invalid_argument("String contains invalid symbols or string is empty"s);
         }
         
         int amount_of_minus = count(text.begin(), text.end(), '-');
-        if (amount_of_minus == text.size() || amount_of_minus > 1) {
-            throw invalid_argument("Invalid argument"s);
+        if (amount_of_minus == text.size()) {
+            throw invalid_argument("Word contains only minus"s);
+        }
+        
+        if (text[0] == '-' && text[1] == '-') {
+            throw invalid_argument("Word contains sequence of two or more minuses");
         }
           
         bool is_minus = false;
@@ -256,7 +260,7 @@ private:
 
         return {text, is_minus, IsStopWord(text)};
     }
-
+     
     struct Query {
         set<string> plus_words;
         set<string> minus_words;
