@@ -2,9 +2,11 @@
 #include "request_queue.h"
 #include "paginator.h"
 
-#include <vector>
-
 using namespace std::string_literals;
+
+using std::vector;
+using std::set;
+using std::string;
 
 int main() {
     SearchServer search_server("and in at"s);

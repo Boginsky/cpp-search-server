@@ -13,8 +13,6 @@
 #include "document.h"
 
 using namespace std::string_literals;
-using namespace std;
-
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 const double MAX_RELEVANCE_DIFF = 1e-6;
@@ -95,29 +93,30 @@ std::set<std::string> SearchServer::MakeUniqueNonEmptyStrings(const StringContai
     return non_empty_strings;
 }
 
-template <typename StringContainer>
-SearchServer::SearchServer(const StringContainer& stop_words) : stop_words_(MakeUniqueNonEmptyStrings(stop_words)) {
-    if (!all_of(stop_words_.begin(), stop_words_.end(), IsValidWord)) {
-        throw std::invalid_argument("Some of stop words are invalid"s);
+    template <typename StringContainer>
+    SearchServer::SearchServer(const StringContainer& stop_words) : stop_words_(MakeUniqueNonEmptyStrings(stop_words)) {
+            if (!all_of(stop_words_.begin(), stop_words_.end(), IsValidWord)) {
+                throw std::invalid_argument("Some of stop words are invalid"s);
+            }
     }
-}
         
-template <typename DocumentPredicate>
-std::vector<Document> SearchServer::FindTopDocuments(const std::string& raw_query, DocumentPredicate document_predicate) const {
-    const Query query = ParseQuery(raw_query);
-    std::vector<Document> matched_documents = FindAllDocuments(query, document_predicate);
+    template <typename DocumentPredicate>
+    std::vector<Document> SearchServer::FindTopDocuments(const std::string& raw_query, DocumentPredicate document_predicate) const {
+        const Query query = ParseQuery(raw_query);
+        std::vector<Document> matched_documents = FindAllDocuments(query, document_predicate);
 
-    std::sort(matched_documents.begin(), matched_documents.end(),
-        [](const Document& lhs, const Document& rhs) {
-            return lhs.relevance > rhs.relevance || (abs(lhs.relevance - rhs.relevance) < MAX_RELEVANCE_DIFF && lhs.rating > rhs.rating);
-    });
+        std::sort(matched_documents.begin(), matched_documents.end(),
+            [](const Document& lhs, const Document& rhs) {
+                return lhs.relevance > rhs.relevance 
+                || (std::abs(lhs.relevance - rhs.relevance) < MAX_RELEVANCE_DIFF && lhs.rating > rhs.rating);
+            });
         
-    if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
-        matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
+        if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
+            matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
+        }
+
+        return matched_documents;
     }
-
-    return matched_documents;
-}
 
 template <typename DocumentPredicate>
 std::vector<Document> SearchServer::FindAllDocuments(const Query& query, DocumentPredicate document_predicate) const {

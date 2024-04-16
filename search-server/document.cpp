@@ -1,8 +1,5 @@
 #include "document.h"
 
-#include <iostream>
-#include <string>
-
 using namespace std::string_literals;
 
 Document::Document() : id(0), relevance(0.0), rating(0) {}
@@ -23,16 +20,19 @@ void PrintDocument(const Document& document) {
     std::cout << "{ "s
          << "document_id = "s << document.id << ", "s
          << "relevance = "s << document.relevance << ", "s
-         << "rating = "s << document.rating << " }"s << std::endl;
+         << "rating = "s << document.rating << " }"s
+         << std::endl;
 }
 
-void PrintMatchDocumentResult(int document_id, const std::vector<std::string_view>& words, DocumentStatus status) {
+void PrintMatchDocumentResult(int document_id, const std::vector<std::string>& words, DocumentStatus status) {
     std::cout << "{ "s
          << "document_id = "s << document_id << ", "s
          << "status = "s << static_cast<int>(status) << ", "s
          << "words ="s;
-    for (const std::string_view& word : words) {
+    
+    for (const std::string& word : words) {
         std::cout << ' ' << word;
     }
+    
     std::cout << "}"s << std::endl;
 }
